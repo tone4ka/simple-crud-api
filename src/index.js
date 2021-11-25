@@ -1,6 +1,8 @@
 require("dotenv").config();
 const http = require("http");
-const { v4: uuidv4 } = require("uuid");
+const isFieldsValid = require("./functions/isFieldsValid");
+const addNewPersonAndSendIt = require("./functions/addNewPersonAndSendIt");
+const sendMessage = require("./functions/sendMessage");
 
 const persons = [];
 
@@ -9,9 +11,11 @@ const server = http.createServer((req, res) => {
   res.setHeader("Transfer-Encoding", "chunked");
 
   if (req.url === "/person" && req.method === "GET") {
-    res.statusCode = 200;
-    res.write(JSON.stringify(persons));
-    res.end();
+    sendMessage(
+      res,
+      200,
+      JSON.stringify(persons)
+    );
   } else if (req.url === "/person" && req.method === "POST") {
     let data = "";
     req.on("data", (chunk) => {
@@ -19,47 +23,74 @@ const server = http.createServer((req, res) => {
     });
     req.on("end", async () => {
       const personData = JSON.parse(data);
-      if (!personData.name || typeof personData.name !== 'string'
-       || !personData.age || typeof personData.age !== 'number'
-       || !personData.hobbies || !Array.isArray(personData.hobbies)) {
-        res.statusCode = 400;
-        res.write('The request body does not contain required fields or some fields is incorrect');
+      if (isFieldsValid(personData)) {
+        addNewPersonAndSendIt(persons, personData, res);
       } else {
-        const newPerson = {
-          id: uuidv4(),
-          ...personData,
-        };
-        persons.push(newPerson);
-        res.statusCode = 201;
-        res.write(JSON.stringify(newPerson));
+        sendMessage(
+          res,
+          400,
+          "The request body does not contain required fields or some fields is incorrect"
+        );
       }
-      res.end();
     });
   } else {
     const personId = req.url.split("/").pop();
-    if (req.url === `/person/${personId}` && req.method === "GET") {
-      const requiredPerson = persons.find((person) => person.id === personId);
-      res.statusCode = 200;
-      res.write(JSON.stringify(requiredPerson));
-      res.end();
-      /*
-      Сервер возвращает статус код 400 и соответствующее сообщение,
-      если personId невалиден (не uuid) плюс 6 баллов
-      Сервер возвращает статус код 404 и соответствующее сообщение,
-      если запись с id === personId не найдена плюс 6 баллов
-      */
-    } else if (req.url === `/person/${personId}` && req.method === "PUT") {
-      /*
-      Сервер возвращает статус код 200 и обновленную запись плюс 10 баллов
-      Сервер возвращает статус код 400 и соответствующее сообщение, если personId невалиден (не uuid) плюс 6 баллов
-      Сервер возвращает статус код 404 и соответствующее сообщение, если запись с id === personId не найдена плюс 6 баллов
-      */
-    } else if (req.url === `/person/${personId}` && req.method === "DELETE ") {
-      /*
-      Сервер возвращает статус код 204 если запись найдена и удалена плюс 10 баллов
-      Сервер возвращает статус код 400 и соответствующее сообщение, если personId невалиден (не uuid) плюс 6 баллов
-      Сервер возвращает статус код 404 и соответствующее сообщение, если запись с id === personId не найдена плюс 6 баллов
-      */
+    const regexp =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const requiredPerson = persons.find((person) => person.id === personId);
+    if (!regexp.test(personId)) {
+      sendMessage(res, 400, "Person Id format does not match  UUID");
+    } else if (!requiredPerson) {
+      sendMessage(res, 404, "The person with the given id was not found");
+    } else {
+      if (req.url === `/person/${personId}` && req.method === "GET") {
+        sendMessage(
+          res,
+          200,
+          JSON.stringify(requiredPerson)
+        );
+      } else if (req.url === `/person/${personId}` && req.method === "PUT") {
+        let data = "";
+        req.on("data", (chunk) => {
+          data += chunk;
+        });
+        req.on("end", async () => {
+          const newPersonData = JSON.parse(data);
+          if (isFieldsValid(newPersonData)) {
+            for (let key in newPersonData) {
+              requiredPerson[key] = newPersonData[key];
+            }
+            sendMessage(
+              res,
+              200,
+              JSON.stringify(requiredPerson)
+            );
+          } else {
+            sendMessage(
+              res,
+              400,
+              "The request body does not contain required fields or some fields is incorrect"
+            );
+          }
+        });
+      } else if (
+        req.url === `/person/${personId}` &&
+        req.method === "DELETE"
+      ) {
+        const index = persons.findIndex((person) => person.id === personId);
+        persons.splice(index, 1);
+        sendMessage(
+          res,
+          400,
+          `Person ${personId} deleted`
+        );
+      } else {
+        sendMessage(
+          res,
+          404,
+          "Something went wrong"
+        );
+      }
     }
   }
 });
