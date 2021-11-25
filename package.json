@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start:dev": "nodemon src/index.js",
-    "start:prod": "cross-env NODE_ENV=production webpack --progress"
+    "start:prod": "cross-env NODE_ENV=production webpack --progress --mode=production && node ./build/app.js"
   },
   "repository": {
     "type": "git",

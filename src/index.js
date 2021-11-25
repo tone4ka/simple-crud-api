@@ -18,19 +18,23 @@ const server = http.createServer((req, res) => {
       data += chunk;
     });
     req.on("end", async () => {
-      const newPerson = {
-        id: uuidv4(),
-        ...JSON.parse(data),
-      };
-      persons.push(newPerson);
-      res.statusCode = 201;
-      res.write(JSON.stringify(newPerson));
-      console.log(JSON.stringify(newPerson));
+      const personData = JSON.parse(data);
+      if (!personData.name || typeof personData.name !== 'string'
+       || !personData.age || typeof personData.age !== 'number'
+       || !personData.hobbies || !Array.isArray(personData.hobbies)) {
+        res.statusCode = 400;
+        res.write('The request body does not contain required fields or some fields is incorrect');
+      } else {
+        const newPerson = {
+          id: uuidv4(),
+          ...personData,
+        };
+        persons.push(newPerson);
+        res.statusCode = 201;
+        res.write(JSON.stringify(newPerson));
+      }
       res.end();
     });
-    /*
-    Сервер возвращает статус код 400 и соответствующее сообщение, если тело запроса не содержит обязательных полей плюс 6 баллов
-    */
   } else {
     const personId = req.url.split("/").pop();
     if (req.url === `/person/${personId}` && req.method === "GET") {
@@ -39,8 +43,10 @@ const server = http.createServer((req, res) => {
       res.write(JSON.stringify(requiredPerson));
       res.end();
       /*
-      Сервер возвращает статус код 400 и соответствующее сообщение, если personId невалиден (не uuid) плюс 6 баллов
-      Сервер возвращает статус код 404 и соответствующее сообщение, если запись с id === personId не найдена плюс 6 баллов
+      Сервер возвращает статус код 400 и соответствующее сообщение,
+      если personId невалиден (не uuid) плюс 6 баллов
+      Сервер возвращает статус код 404 и соответствующее сообщение,
+      если запись с id === personId не найдена плюс 6 баллов
       */
     } else if (req.url === `/person/${personId}` && req.method === "PUT") {
       /*
