@@ -6,7 +6,7 @@
 
 #### To run the application on the production mode, enter the ***npm run start:prod*** command in the command line. After that you also can see ***app.js*** file in a folder named ***build***.
 
-#### To send requests to this server use Postman with url ***http://localhost:5000*** and JSON:
+#### To send requests (JSON) to this server use Postman with url ***http://localhost:5000***
 
 ##### API path /person:
 
