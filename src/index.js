@@ -10,31 +10,40 @@ const server = http.createServer((req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Transfer-Encoding", "chunked");
 
-
   if (req.url === "/person" && req.method === "GET") {
-    sendMessage(
-      res,
-      200,
-      JSON.stringify(persons)
-    );
+    try {
+      sendMessage(
+        res,
+        200,
+        JSON.stringify(persons)
+      );
+    } catch (error) {
+      res.setHeader("Content-Type", 'text/plain');
+      sendMessage(res, 500, error.message)
+    }
   } else if (req.url === "/person" && req.method === "POST") {
-    let data = "";
-    req.on("data", (chunk) => {
-      data += chunk;
-    });
-    req.on("end", async () => {
-      const personData = JSON.parse(data);
-      if (isFieldsValid(personData)) {
-        addNewPersonAndSendIt(persons, personData, res);
-      } else {
-        res.setHeader("Content-Type", 'text/plain');
-        sendMessage(
-          res,
-          400,
-          "The request body does not contain required fields or some fields is incorrect"
-        );
-      }
-    });
+    try {
+      let data = "";
+      req.on("data", (chunk) => {
+        data += chunk;
+      });
+      req.on("end", async () => {
+        const personData = JSON.parse(data);
+        if (isFieldsValid(personData)) {
+          addNewPersonAndSendIt(persons, personData, res);
+        } else {
+          res.setHeader("Content-Type", 'text/plain');
+          sendMessage(
+            res,
+            400,
+            "The request body does not contain required fields or some fields is incorrect"
+          );
+        }
+      });
+    } catch (error) {
+      res.setHeader("Content-Type", 'text/plain');
+      sendMessage(res, 500, error.message)
+    }
   } else {
     URLarr = req.url.split("/");
     if(URLarr.length > 3 || URLarr[1] != 'person') {
@@ -99,7 +108,7 @@ const server = http.createServer((req, res) => {
           res.setHeader("Content-Type", 'text/plain');
           sendMessage(
             res,
-            404,
+            500,
             "Something went wrong"
           );
         }
