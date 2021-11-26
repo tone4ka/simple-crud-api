@@ -1,7 +1,9 @@
 const request = require("supertest");
 const server = require('../src/index');
 
-describe("GET /person => POST /person => GET /person/newPersonId => PUT /person/newPersonId => DELETE /person/newPersonId => GET /person/newPersonId", () => {
+describe(`SUCCESS SCENARIO: GET /person => POST /person =>
+GET /person/newPersonId => PUT /person/newPersonId => DELETE /person/newPersonId =>
+GET /person/newPersonId`, () => {
   let personId;
   afterAll(() => {
     server.close();
@@ -64,4 +66,26 @@ describe("GET /person => POST /person => GET /person/newPersonId => PUT /person/
       expect(previouslyCreatedPerson.statusCode).toBe(404);
     })
   });
-})
+});
+
+describe(`ERROR SCENARIO: GET /some/non/existing/resource `, () => {
+  test("It should respond with the 'Incorrect URL' message and statusCode 404", async () => {
+     await request(server).get("/some/non/existing/resource")
+    .then((response) => {
+      expect(response.error.text).toEqual("Incorrect URL");
+      expect(response.statusCode).toBe(404);
+    });
+    server.close();
+  });
+});
+
+describe(`ERROR SCENARIO: GET /person/1111 `, () => {
+  test("It should respond with the 'Person Id format does not match  UUID' message and statusCode 400", async () => {
+     await request(server).get("/person/1111")
+    .then((response) => {
+      expect(response.error.text).toEqual("Person Id format does not match  UUID");
+      expect(response.statusCode).toBe(400);
+    });
+    server.close();
+  });
+});
