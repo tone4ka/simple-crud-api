@@ -1,6 +1,6 @@
-function sendMessage(res, statusCode, message) {
+function sendMessage(res, statusCode, msg) {
   res.statusCode = statusCode;
-  res.write(message);
+  res.write(msg);
   res.end();
 };
 
