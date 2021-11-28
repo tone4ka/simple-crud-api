@@ -60,7 +60,7 @@ GET /person/newPersonId`, () => {
   });
 });
   test("It should respond the message 'The person with the given id was not found' and statusCode 404", async () => {
-    await request(server).delete(`/person/${personId}`)
+    await request(server).get(`/person/${personId}`)
     .then((previouslyCreatedPerson) => {
       expect(previouslyCreatedPerson.error.text).toEqual('The person with the given id was not found');
       expect(previouslyCreatedPerson.statusCode).toBe(404);
