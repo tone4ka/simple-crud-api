@@ -7,8 +7,7 @@
     "start:dev": "nodemon src/index.js",
     "start:prod": "cross-env NODE_ENV=production webpack --progress --mode=production && node ./build/app.js",
     "test": "jest --verbose",
-    "coverage": "jest --coverage",
-    "ggg": "jest --detectOpenHandles"
+    "coverage": "jest --coverage"
   },
   "repository": {
     "type": "git",
